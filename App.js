@@ -13,7 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 
 const INITIAL_FORM = {
   name: '',
-  description: '',
+  description: '', 
   price: '',
   category: '',
 };
@@ -59,9 +59,6 @@ export default function App() {
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
-        {/* <View style={styles.card}>
-          <Text style={styles.cardText}>Primeros pasos en la app</Text>
-        </View> */}
 
         <View style={styles.formCard}>
           <Text style={styles.formTitle}>Agregar producto</Text>
@@ -113,22 +110,31 @@ export default function App() {
           </Pressable>
         </View>
 
-        {products.length > 0 && (
-          <View style={styles.listCard}>
-            <Text style={styles.listTitle}>Productos ({products.length})</Text>
-            {products.map((product) => (
+        <View style={styles.listCard}>
+          <Text style={styles.listTitle}>
+            Productos ({products.length})
+          </Text>
+
+          {products.length === 0 ? (
+            <Text style={styles.productMeta}>
+              Todavía no agregaste productos.
+            </Text>
+          ) : (
+            products.map((product) => (
               <View key={product.id} style={styles.productItem}>
                 <Text style={styles.productName}>{product.name}</Text>
                 <Text style={styles.productMeta}>
-                  {product.category} · ${product.price.toLocaleString('es-AR')}
+                  ${product.price} · {product.category}
                 </Text>
                 {product.description ? (
-                  <Text style={styles.productDescription}>{product.description}</Text>
+                  <Text style={styles.productDescription}>
+                    {product.description}
+                  </Text>
                 ) : null}
               </View>
-            ))}
-          </View>
-        )}
+            ))
+          )}
+        </View>
       </ScrollView>
 
       <StatusBar style="light" />
@@ -234,5 +240,5 @@ const styles = StyleSheet.create({
   productDescription: {
     fontSize: 14,
     color: '#5A6F8C',
-  },
+  }
 });
