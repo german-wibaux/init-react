@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Dimensions,
   KeyboardAvoidingView,
@@ -31,6 +32,7 @@ const INITIAL_FORM = {
 export default function App() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [products, setProducts] = useState([]);
+  const [editingId, setEditingId] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [activeScreen, setActiveScreen] = useState('home');
   const drawerX = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
@@ -54,13 +56,55 @@ export default function App() {
   const toggleDrawer = () => setIsDrawerOpen((open) => !open);
   const closeDrawer = () => setIsDrawerOpen(false);
 
+  const resetForm = () => {
+    setForm(INITIAL_FORM);
+    setEditingId(null);
+  };
+
   const handleMenuPress = (id) => {
+    if (id === 'add') {
+      resetForm();
+    }
     setActiveScreen(id);
     closeDrawer();
   };
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleEdit = (product) => {
+    setEditingId(product.id);
+    setForm({
+      name: product.name,
+      description: product.description,
+      price: String(product.price),
+      category:
+        product.category === 'Sin categoría' ? '' : product.category,
+    });
+    setActiveScreen('add');
+  };
+
+  const handleDelete = (product) => {
+    Alert.alert(
+      'Eliminar producto',
+      `¿Querés eliminar "${product.name}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => {
+            setProducts((current) =>
+              current.filter((item) => item.id !== product.id),
+            );
+            if (editingId === product.id) {
+              resetForm();
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleSubmit = () => {
@@ -71,26 +115,41 @@ export default function App() {
       return;
     }
 
-    setProducts((current) => [
-      {
-        id: Date.now().toString(),
-        name,
-        description: form.description.trim(),
-        price: Number(price),
-        category: form.category.trim() || 'Sin categoría',
-      },
-      ...current,
-    ]);
+    const payload = {
+      name,
+      description: form.description.trim(),
+      price: Number(price),
+      category: form.category.trim() || 'Sin categoría',
+    };
 
-    setForm(INITIAL_FORM);
+    if (editingId) {
+      setProducts((current) =>
+        current.map((product) =>
+          product.id === editingId ? { ...product, ...payload } : product,
+        ),
+      );
+    } else {
+      setProducts((current) => [
+        {
+          id: Date.now().toString(),
+          ...payload,
+        },
+        ...current,
+      ]);
+    }
+
+    resetForm();
     setActiveScreen('list');
   };
 
   const isSubmitDisabled = !form.name.trim() || !form.price.trim();
+  const isEditing = editingId !== null;
 
   const renderForm = () => (
     <View style={styles.formCard}>
-      <Text style={styles.formTitle}>Agregar producto</Text>
+      <Text style={styles.formTitle}>
+        {isEditing ? 'Editar producto' : 'Agregar producto'}
+      </Text>
 
       <Text style={styles.label}>Nombre</Text>
       <TextInput
@@ -135,8 +194,16 @@ export default function App() {
         onPress={handleSubmit}
         disabled={isSubmitDisabled}
       >
-        <Text style={styles.buttonText}>Guardar producto</Text>
+        <Text style={styles.buttonText}>
+          {isEditing ? 'Guardar cambios' : 'Guardar producto'}
+        </Text>
       </Pressable>
+
+      {isEditing ? (
+        <Pressable style={styles.cancelButton} onPress={resetForm}>
+          <Text style={styles.cancelButtonText}>Cancelar edición</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 
@@ -154,8 +221,25 @@ export default function App() {
               ${product.price} · {product.category}
             </Text>
             {product.description ? (
-              <Text style={styles.productDescription}>{product.description}</Text>
+              <Text style={styles.productDescription}>
+                {product.description}
+              </Text>
             ) : null}
+
+            <View style={styles.productActions}>
+              <Pressable
+                style={styles.editButton}
+                onPress={() => handleEdit(product)}
+              >
+                <Text style={styles.editButtonText}>Editar</Text>
+              </Pressable>
+              <Pressable
+                style={styles.deleteButton}
+                onPress={() => handleDelete(product)}
+              >
+                <Text style={styles.deleteButtonText}>Eliminar</Text>
+              </Pressable>
+            </View>
           </View>
         ))
       )}
@@ -410,6 +494,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  cancelButton: {
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#5C3A3A',
+    fontSize: 15,
+    fontWeight: '600',
+  },
   listCard: {
     backgroundColor: '#D4E4F7',
     padding: 20,
@@ -439,5 +533,32 @@ const styles = StyleSheet.create({
   productDescription: {
     fontSize: 14,
     color: '#5A6F8C',
+  },
+  productActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  editButton: {
+    backgroundColor: '#2A3F5F',
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  editButtonText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: '#C45C5C',
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  deleteButtonText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
