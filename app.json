@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "init-react",
-    "slug": "init-react",
+    "name": "TP Anual",
+    "slug": "tp-anual",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
